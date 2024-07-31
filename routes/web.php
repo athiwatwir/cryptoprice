@@ -1,11 +1,13 @@
 <?php
 
+use App\Helpers\CryptoDataHelper;
 use App\Helpers\IndicatorHelper;
 use App\Http\Controllers\MarketPriceController;
 use Illuminate\Support\Facades\Route;
 use NotificationChannels\Telegram\TelegramUpdates;
 
 Route::get('/', function () {
+
     return view('welcome');
 });
 

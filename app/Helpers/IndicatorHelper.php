@@ -11,16 +11,19 @@ use Illuminate\Support\Facades\DB;
 
 class IndicatorHelper
 {
-
+    public static $stupidCoins = ['XEMUSDT'];
     public static function calculator()
     {
         $types = ['BI'];
+
+
 
         foreach ($types as $a => $type) {
             $prices = MarketPrices::select('price')->where('type', $type)->orderBy('created_at', 'DESC')->limit(60)->get();
             $coins = [];
 
             foreach ($prices as $index => $row) {
+
                 $jsondata = $row['price'];
                 if (!is_null($jsondata) && $jsondata != '') {
                     $jsondata = json_decode($jsondata, true);
@@ -31,22 +34,43 @@ class IndicatorHelper
                 }
             }
 
-
+            $sentCount = 0;
             foreach ($coins as $coin => $prices) {
+                if(in_array($coin,IndicatorHelper::$stupidCoins)){
+                    continue;
+                }
+
                 $priceCalculcateMaxArr = $prices;
                 unset($priceCalculcateMaxArr[0]);
                 unset($priceCalculcateMaxArr[1]);
 
                 $maxPrice = max($priceCalculcateMaxArr);
+                $minPrice = min($priceCalculcateMaxArr);
 
                 $changePercent = round((($prices[0] - $prices[2]) / $prices[2]) * 100, 2);
 
                 if ($changePercent >= 1 && ($prices[0] > $maxPrice)) {
+                    if($sentCount > 5){
+                        break;
+                    }
                     $notify = IndicatorHelper::notificationLog($coin, true);
                     if ($notify['isnotify']) {
                         IndicatorHelper::sendLong($coin, $changePercent, $notify['count']);
+                        CryptoDataHelper::sendCryptoChartToTelegram($coin);
+                        $sentCount++;
                     }
 
+                }elseif($changePercent <= -1 && ($prices[0]<$minPrice)){
+                    if($sentCount > 5){
+                        break;
+                    }
+
+                    $notify = IndicatorHelper::notificationLog($coin, false);
+                    if ($notify['isnotify']) {
+                        IndicatorHelper::sendShort($coin, $changePercent, $notify['count']);
+                        CryptoDataHelper::sendCryptoChartToTelegram($coin);
+                        $sentCount++;
+                    }
                 }
 
             }

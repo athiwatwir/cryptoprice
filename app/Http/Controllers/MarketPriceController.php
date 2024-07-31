@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\CryptoDataHelper;
 use App\Helpers\IndicatorHelper;
 use App\Models\MarketPrices;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class MarketPriceController extends Controller
     {
         $this->binance();
         //$this->okx();
+
 
         IndicatorHelper::calculator();
 
@@ -53,7 +55,8 @@ class MarketPriceController extends Controller
             $coinName = $coin['symbol'];
             $price = $coin['markPrice'];
 
-            $stupidCoins = [];
+            $stupidCoins = IndicatorHelper::$stupidCoins;
+
             if(Str::endsWith($coinName, 'USDT') && (in_array($coinName,$stupidCoins) == false)){
                 array_push($newDataArr,['symbol'=>$coinName,'markPrice'=>$price]);
             }
