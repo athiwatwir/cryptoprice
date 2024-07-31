@@ -14,9 +14,9 @@ class MarketPriceController extends Controller
     public function updatePrice()
     {
         $this->binance();
-        $this->okx();
+        //$this->okx();
 
-        //IndicatorHelper::sendTestTele();
+        IndicatorHelper::calculator();
 
         return response()->json([
             'status' => true,
