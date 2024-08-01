@@ -56,7 +56,7 @@ class IndicatorHelper
                     $notify = IndicatorHelper::notificationLog($coin, true);
                     if ($notify['isnotify']) {
                         IndicatorHelper::sendLong($coin, $changePercent, $notify['count']);
-                        CryptoDataHelper::sendCryptoChartToTelegram($coin);
+                        //CryptoDataHelper::sendCryptoChartToTelegram($coin);
                         $sentCount++;
                     }
 
@@ -68,7 +68,7 @@ class IndicatorHelper
                     $notify = IndicatorHelper::notificationLog($coin, false);
                     if ($notify['isnotify']) {
                         IndicatorHelper::sendShort($coin, $changePercent, $notify['count']);
-                        CryptoDataHelper::sendCryptoChartToTelegram($coin);
+                        //CryptoDataHelper::sendCryptoChartToTelegram($coin);
                         $sentCount++;
                     }
                 }

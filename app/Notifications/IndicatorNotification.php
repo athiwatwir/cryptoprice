@@ -42,7 +42,7 @@ class IndicatorNotification extends Notification
                 ->content("[".$this->data->count."]🟢 LONG #" . $this->data->coin.' up '.$this->data->amount.'%');
         } else {
             return TelegramMessage::create()
-            ->content("[".$this->data->count."]🔴 LONG #" . $this->data->coin.' down '.$this->data->amount.'%');
+            ->content("[".$this->data->count."]🔴 SHORT #" . $this->data->coin.' down '.$this->data->amount.'%');
         }
 
     }

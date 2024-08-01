@@ -34,7 +34,7 @@ class CryptoDataHelper
     private function getCryptoData($cryptoId)
     {
         $client = new Client();
-        $response = $client->get("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=60");
+        $response = $client->get("https://api.coingecko.com/api/v3/coins/$cryptoId/market_chart?vs_currency=usd&days=2");
         return json_decode($response->getBody(), true);
     }
 
@@ -67,7 +67,7 @@ class CryptoDataHelper
             imageline($image, $x1, $y1, $x2, $y2, $red);
         }
 
-        $filename = public_path('crypto_chart.jpg');
+        $filename = base_path().'/public_html/crypto_chart.jpg';
         imagejpeg($image, $filename);
         imagedestroy($image);
 
