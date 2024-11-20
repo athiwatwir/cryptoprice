@@ -8,6 +8,7 @@ use App\Notifications\IndicatorNotification;
 use Illuminate\Support\Facades\Notification;
 use NotificationChannels\Telegram\TelegramMessage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class IndicatorHelper
 {
@@ -110,14 +111,18 @@ class IndicatorHelper
             return [
                 'count' => $count,
                 'isnotify' => true,
+                'diffSecond'=>0
             ];
         } else {
             $newTime = now()->diffInSeconds($notificationLog->updated_at);
+
             $diffSecond = $newTime;
+            //Log::debug($diffSecond / 60);
 
             return [
                 'count' => $count,
-                'isnotify' => ($diffSecond / 60 >= 60) ? true : false
+                'isnotify' => ($diffSecond / 60 <= -60) ? true : false,
+                'diffSecond'=>$diffSecond
             ];
         }
 

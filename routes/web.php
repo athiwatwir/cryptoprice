@@ -2,12 +2,13 @@
 
 use App\Helpers\CryptoDataHelper;
 use App\Helpers\IndicatorHelper;
+use App\Helpers\TrandHelper;
 use App\Http\Controllers\MarketPriceController;
 use Illuminate\Support\Facades\Route;
 use NotificationChannels\Telegram\TelegramUpdates;
 
 Route::get('/', function () {
-
+    TrandHelper::calculator();
     return view('welcome');
 });
 

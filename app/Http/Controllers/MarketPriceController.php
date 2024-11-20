@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\CryptoDataHelper;
 use App\Helpers\IndicatorHelper;
+use App\Helpers\TrandHelper;
 use App\Models\MarketPrices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -19,6 +20,7 @@ class MarketPriceController extends Controller
 
 
         IndicatorHelper::calculator();
+        TrandHelper::calculator();
 
         return response()->json([
             'status' => true,
