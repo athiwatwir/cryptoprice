@@ -17,11 +17,8 @@ class TrandHelper
     {
         $types = ['BI'];
 
-
-
-
         foreach ($types as $a => $type) {
-            $prices = MarketPrices::select('price')->where('type', $type)->orderBy('created_at', 'DESC')->limit(10)->get();
+            $prices = MarketPrices::select('price')->where('type', $type)->orderBy('created_at', 'DESC')->limit(6)->get();
             $coins = [];
             $_coins = [];
 
@@ -96,7 +93,7 @@ class TrandHelper
                                     'count' => 1,
                                 ]
                             );
-                            
+
                         }
 
                     }
