@@ -37,7 +37,7 @@ class TrandNotification extends Notification
     public function toTelegram($notifiable)
     {
         return TelegramMessage::create()
-                ->content("LONG #" . $this->data->coin.' up ');
+                ->content("UP #" . $this->data->coin.', '.$this->data->current.', '.$this->data->max.' -- '.$this->data->text);
 
     }
 

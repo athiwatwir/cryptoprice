@@ -16,12 +16,13 @@ class IndicatorHelper
     public static function calculator()
     {
         $types = ['BI'];
-
+        $data = [];
 
 
         foreach ($types as $a => $type) {
             $prices = MarketPrices::select('price')->where('type', $type)->orderBy('created_at', 'DESC')->limit(60)->get();
             $coins = [];
+            $data['sizeof calculate']= sizeof($prices);
 
             foreach ($prices as $index => $row) {
 
@@ -50,32 +51,75 @@ class IndicatorHelper
 
                 $changePercent = round((($prices[0] - $prices[2]) / $prices[2]) * 100, 2);
 
-                if ($changePercent >= 1 && ($prices[0] > $maxPrice)) {
+                if ($changePercent >= 1 && $prices[0] >= $maxPrice) {
                     if($sentCount > 5){
                         break;
                     }
-                    $notify = IndicatorHelper::notificationLog($coin, true);
-                    if ($notify['isnotify']) {
-                        IndicatorHelper::sendLong($coin, $changePercent, $notify['count']);
-                        //CryptoDataHelper::sendCryptoChartToTelegram($coin);
-                        $sentCount++;
+
+                    $lastPrice = $prices[0];
+                    $failedCount = 0;
+                    $loopCount = 0;
+
+                    foreach($prices as $p){
+                        if($lastPrice >= $p){
+
+                        }else{
+                            $failedCount++;
+                        }
+
+                        $loopCount++;
+                        if($loopCount >3){
+                            break;
+                        }
+                    }
+
+                    if($failedCount <= 1){
+                        $notify = IndicatorHelper::notificationLog($coin, true);
+                        if ($notify['isnotify']) {
+                            IndicatorHelper::sendLong($coin, $changePercent, $notify['count']);
+                            //CryptoDataHelper::sendCryptoChartToTelegram($coin);
+                            $sentCount++;
+                        }
                     }
 
                 }elseif($changePercent <= -1 && ($prices[0]<$minPrice)){
+                    /*
                     if($sentCount > 5){
                         break;
                     }
 
-                    $notify = IndicatorHelper::notificationLog($coin, false);
-                    if ($notify['isnotify']) {
-                        IndicatorHelper::sendShort($coin, $changePercent, $notify['count']);
-                        //CryptoDataHelper::sendCryptoChartToTelegram($coin);
-                        $sentCount++;
+                    $lastPrice = $prices[0];
+                    $failedCount = 0;
+                    $loopCount = 0;
+                    foreach($prices as $p){
+                        if(!($p >=$lastPrice)){
+                            $failedCount++;
+                        }
+                        $lastPrice = $p;
+                        $loopCount++;
+
+                        if($loopCount >5){
+                            break;
+                        }
                     }
+
+                    if($failedCount <= 2){
+                        $notify = IndicatorHelper::notificationLog($coin, false);
+                        if ($notify['isnotify']) {
+                            IndicatorHelper::sendShort($coin, $changePercent, $notify['count']);
+                            //CryptoDataHelper::sendCryptoChartToTelegram($coin);
+                            $sentCount++;
+                        }
+                    }
+                        */
+
+
                 }
 
             }
         }
+
+        return $data;
 
 
     }

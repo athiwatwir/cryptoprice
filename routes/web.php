@@ -3,7 +3,9 @@
 use App\Helpers\CryptoDataHelper;
 use App\Helpers\IndicatorHelper;
 use App\Helpers\TrandHelper;
+use App\Http\Controllers\BinanceIndicatorController;
 use App\Http\Controllers\MarketPriceController;
+
 use Illuminate\Support\Facades\Route;
 use NotificationChannels\Telegram\TelegramUpdates;
 
@@ -17,8 +19,21 @@ Route::get('/indicator', function () {
 });
 
 
+
+
 Route::controller(MarketPriceController::class)->group(function () {
     Route::get('/marketprice/update', 'updatePrice')->name('marketprice.updatePrice');
+
+    Route::get('/marketprice/update-trand', 'updateTrand')->name('marketprice.updateTrand');
+    Route::get('/marketprice/indicator', 'indicator')->name('marketprice.indicator');
+
+    Route::get('/marketprice/max', 'max')->name('marketprice.max');
+});
+
+
+Route::controller(BinanceIndicatorController::class)->group(function () {
+    Route::get('/bn/pump', 'pump')->name('bn.pump');
+
 });
 
 

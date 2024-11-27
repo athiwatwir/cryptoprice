@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Models\CoinStats;
 use App\Models\MarketPrices;
 use App\Models\Notifications;
 use App\Notifications\IndicatorNotification;
@@ -16,9 +17,12 @@ class TrandHelper
     public static function calculator()
     {
         $types = ['BI'];
+        $data = [];
 
         foreach ($types as $a => $type) {
-            $prices = MarketPrices::select('price')->where('type', $type)->orderBy('created_at', 'DESC')->limit(6)->get();
+            $prices = MarketPrices::select('price','created_at')->where('type', $type)->orderBy('created_at', 'DESC')->limit(15)->get();
+
+            //dd($prices);
             $coins = [];
             $_coins = [];
 
@@ -34,58 +38,45 @@ class TrandHelper
                 }
             }
 
-            $upperCount = 0;
-            $failCount = 0;
+
             $lastPrice = 0;
+            $loopCoin = 0;
             //Log::debug($coins);
             foreach ($coins as $coin => $prices) {
+                $upperCount = 0;
+                $failCount = 0;
 
+                $lastPrice = $prices[0];
                 foreach ($prices as $index => $price) {
+
                     if($price <= $lastPrice){
                         $upperCount++;
-                        //$failCount = 0;
+                        $lastPrice = $price;
                     }else{
                         $failCount++;
                     }
 
-                    $lastPrice = $price;
                 }
 
                 if($failCount < 4){
-                    if(sizeof($_coins) == 0){
-                        $_prices = MarketPrices::select('price')->where('type', $type)->orderBy('created_at', 'DESC')->limit(720)->get();
-                        foreach ($_prices as $index => $row) {
-
-                            $jsondata = $row['price'];
-                            if (!is_null($jsondata) && $jsondata != '') {
-                                $jsondata = json_decode($jsondata, true);
-
-                                foreach ($jsondata as $index2 => $d) {
-                                    $_coins[$d['symbol']][$index] = (float) $d['markPrice'];
-                                }
-                            }
-                        }
-                    }
-
-                    $maxPrice = max(($_coins[$coin]));
-                    //Log::debug($coin);
-                    //Log::debug($maxPrice);
-                    //Log::debug($prices[0]);
-
+                    $coinStat = CoinStats::where('name',$coin)->first();
+                    $max24 = $coinStat->max24;
                     //$prices[0] > $maxPrice
-                    if($prices[0] > $maxPrice){
+                    if($prices[0] > $max24){
                         $toDaydate = date('Y-m-d');
                         $_name = sprintf('%s_TRAND_%s', $toDaydate,  $coin);
 
                         $notificationLog = Notifications::where('name', $_name)->first();
-                        if(empty($notificationLog)){
+                        if(is_null($notificationLog)){
 
                             $data = [
                                 'telegram_user_id' => '@cryptotrands789',
                                 'coin' => $coin,
+                                'current'=>$prices[0],
+                                'max'=>$max24,
+                                'text'=>''
                             ];
                             Notification::route('telegram', '@cryptotrands789')->notify(new TrandNotification($data));
-
 
                             $notificationLog = Notifications::create(
                                 [
@@ -94,14 +85,19 @@ class TrandHelper
                                 ]
                             );
 
+
                         }
 
                     }
 
                 }
+                $loopCoin++;
             }
         }
 
+        $data['loopCoin'] = $loopCoin;
+
+        return $data;
 
     }
 }
