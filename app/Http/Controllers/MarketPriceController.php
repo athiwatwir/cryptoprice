@@ -68,7 +68,14 @@ class MarketPriceController extends Controller
 
     public function sendChart()
     {
-        CryptoDataHelper::sendCryptoChartToTelegram('BTCUSDT');
+        $coin = request()->c ?? 'BTCUSDT';
+
+        CryptoDataHelper::sendCryptoChartToTelegram($coin);
+
+        return response()->json([
+            'status' => true,
+            'message' => "successfully!",
+        ], 200);
     }
 
     public function max()

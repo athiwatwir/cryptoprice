@@ -58,7 +58,7 @@ class CryptoDataHelper
         $klines = $response->json();
 
         // วาดกราฟ (เช่นใช้ chart.js, QuickChart API หรือวาดด้วย PHP GD)
-        $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode([
+        $chartUrl = "https://quickchart.io/chart?version=3&c=" . urlencode(json_encode([
             'type' => 'candlestick',
             'data' => [
                 'datasets' => [
@@ -78,6 +78,8 @@ class CryptoDataHelper
             ]
         ]));
 
+        //dd($chartUrl);
+
         // ส่งภาพไป Telegram
         $token = '5684645252:AAE-yYoJAo0GPwvjvmDA-Y2GF72gVYE6Vts';
         $chatId = '@cryptopumpdumpnotis';
@@ -87,29 +89,6 @@ class CryptoDataHelper
             'chat_id' => $chatId,
             'photo' => $chartUrl,
             'caption' => "กราฟ $symbol รายชั่วโมง (1H)"
-        ]);
-    }
-
-
-
-    private function sendPhotoToTelegram($filename)
-    {
-        $token = '5684645252:AAE-yYoJAo0GPwvjvmDA-Y2GF72gVYE6Vts';
-        $chatId = '@cryptopumpdumpnotis';
-        $url = "https://api.telegram.org/bot$token/sendPhoto";
-
-        $client = new Client();
-        $client->post($url, [
-            'multipart' => [
-                [
-                    'name' => 'chat_id',
-                    'contents' => $chatId,
-                ],
-                [
-                    'name' => 'photo',
-                    'contents' => fopen($filename, 'r'),
-                ],
-            ],
         ]);
     }
 }

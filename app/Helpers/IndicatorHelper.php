@@ -53,7 +53,7 @@ class IndicatorHelper
                 $changePercent = round((($prices[0] - $prices[2]) / $prices[2]) * 100, 2);
 
                 if ($changePercent >= 1 && $prices[0] >= $maxPrice) {
-                    if ($sentCount > 5) {
+                    if ($sentCount > 10) {
                         break;
                     }
 
@@ -85,7 +85,7 @@ class IndicatorHelper
                             }
 
                             IndicatorHelper::sendLong($coin, $changePercent, $notify['count'], $bidArk, $url);
-                            //CryptoDataHelper::sendCryptoChartToTelegram($coin);
+                            CryptoDataHelper::sendCryptoChartToTelegram($coin);
                             $sentCount++;
                         }
                     }
