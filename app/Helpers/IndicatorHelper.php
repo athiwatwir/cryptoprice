@@ -9,20 +9,21 @@ use Illuminate\Support\Facades\Notification;
 use NotificationChannels\Telegram\TelegramMessage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class IndicatorHelper
 {
     public static $stupidCoins = ['XEMUSDT'];
     public static function calculator()
     {
-        $types = ['BI'];
+        $types = [CryptoDataHelper::$TYPE];
         $data = [];
 
 
         foreach ($types as $a => $type) {
             $prices = MarketPrices::select('price')->where('type', $type)->orderBy('created_at', 'DESC')->limit(60)->get();
             $coins = [];
-            $data['sizeof calculate']= sizeof($prices);
+            $data['sizeof calculate'] = sizeof($prices);
 
             foreach ($prices as $index => $row) {
 
@@ -38,7 +39,7 @@ class IndicatorHelper
 
             $sentCount = 0;
             foreach ($coins as $coin => $prices) {
-                if(in_array($coin,IndicatorHelper::$stupidCoins)){
+                if (in_array($coin, IndicatorHelper::$stupidCoins)) {
                     continue;
                 }
 
@@ -52,7 +53,7 @@ class IndicatorHelper
                 $changePercent = round((($prices[0] - $prices[2]) / $prices[2]) * 100, 2);
 
                 if ($changePercent >= 1 && $prices[0] >= $maxPrice) {
-                    if($sentCount > 5){
+                    if ($sentCount > 5) {
                         break;
                     }
 
@@ -60,29 +61,35 @@ class IndicatorHelper
                     $failedCount = 0;
                     $loopCount = 0;
 
-                    foreach($prices as $p){
-                        if($lastPrice >= $p){
-
-                        }else{
+                    foreach ($prices as $p) {
+                        if ($lastPrice >= $p) {
+                        } else {
                             $failedCount++;
                         }
 
                         $loopCount++;
-                        if($loopCount >3){
+                        if ($loopCount > 3) {
                             break;
                         }
                     }
 
-                    if($failedCount <= 1){
+                    if ($failedCount <= 1) {
                         $notify = IndicatorHelper::notificationLog($coin, true);
                         if ($notify['isnotify']) {
-                            IndicatorHelper::sendLong($coin, $changePercent, $notify['count']);
+                            $bidArk = 0;
+                            $url = '';
+                            if ($type == 'BI') {
+                                $bidArk = IndicatorHelper::binanceBidsArks($coin);
+                                $url = 'https://www.binance.com/en/futures/' . $coin . '?_from=markets';
+                            } else {
+                            }
+
+                            IndicatorHelper::sendLong($coin, $changePercent, $notify['count'], $bidArk, $url);
                             //CryptoDataHelper::sendCryptoChartToTelegram($coin);
                             $sentCount++;
                         }
                     }
-
-                }elseif($changePercent <= -1 && ($prices[0]<$minPrice)){
+                } elseif ($changePercent <= -1 && ($prices[0] < $minPrice)) {
                     /*
                     if($sentCount > 5){
                         break;
@@ -112,50 +119,44 @@ class IndicatorHelper
                         }
                     }
                         */
-
-
                 }
-
             }
         }
 
         return $data;
-
-
     }
 
     public static function notificationLog($coin, $isLong = true)
     {
         $toDaydate = date('Y-m-d');
-        $_name = sprintf('%s_%s_%s', $toDaydate, ($isLong ? 'LONG' : 'SHOT'), $coin);
+        $_code = sprintf('%s_%s_%s', $toDaydate, ($isLong ? 'LONG' : 'SHOT'), $coin);
 
-        $notificationLog = Notifications::where('name', $_name)->first();
+        $notificationLog = Notifications::where('code', $_code)->first();
         $count = 1;
-        if(is_null($notificationLog)){
+        if (is_null($notificationLog)) {
             $notificationLog = Notifications::create(
                 [
-                    'name' => $_name,
+                    'code' => $_code,
+                    'name' => $coin,
                     'count' => $count,
+                    'type' => 'PD'
                 ]
             );
-        }else{
+        } else {
             $count = $notificationLog->count;
             $count++;
-            Notifications::where('name' ,$_name)->update(
+            Notifications::where('code', $_code)->update(
                 [
-
                     'count' => $count,
                 ]
             );
         }
 
-
-
         if ($count == 1) {
             return [
                 'count' => $count,
                 'isnotify' => true,
-                'diffSecond'=>0
+                'diffSecond' => 0
             ];
         } else {
             $newTime = now()->diffInSeconds($notificationLog->updated_at);
@@ -166,14 +167,12 @@ class IndicatorHelper
             return [
                 'count' => $count,
                 'isnotify' => ($diffSecond / 60 <= -60) ? true : false,
-                'diffSecond'=>$diffSecond
+                'diffSecond' => $diffSecond
             ];
         }
-
-
     }
 
-    public static function sendLong($coin, $amount, $count)
+    public static function sendLong($coin, $amount, $count, $bidArk = 0, $url = '')
     {
         $data = [
             'telegram_user_id' => '@cryptopumpdumpnotis',
@@ -181,6 +180,8 @@ class IndicatorHelper
             'coin' => $coin,
             'amount' => $amount,
             'count' => $count,
+            'bid_ark' => $bidArk,
+            'url' => $url
         ];
         Notification::route('telegram', env('TELEGRAM_CHAT_ID'))->notify(new IndicatorNotification($data));
     }
@@ -228,6 +229,37 @@ class IndicatorHelper
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         $result = curl_exec($ch);
         curl_close($ch);
+    }
 
+
+
+    public static function binanceBidsArks($symbol = '')
+    {
+        if (empty($symbol)) {
+            return 1;
+        }
+
+        $url = 'https://fapi.binance.com/fapi/v1/depth?symbol=' . $symbol . '&limit=10';
+        $response = Http::get($url);
+        $data = $response->getBody()->getContents();
+        $dataArr = json_decode($data, true);
+
+        $bids = $dataArr['bids'];
+        $arks = $dataArr['asks'];
+
+        $bidScore = 0;
+        $arkScore = 0;
+        foreach ($bids as $item) {
+            $bidScore += (float)$item[1];
+        }
+
+        foreach ($arks as $item) {
+            $arkScore += (float)$item[1];
+        }
+
+        $sumary = $bidScore / $arkScore;
+        //Log::debug($dataArr);
+        //Log::debug($sumary);
+        return round($sumary, 2);
     }
 }

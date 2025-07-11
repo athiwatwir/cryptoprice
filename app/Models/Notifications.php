@@ -12,5 +12,7 @@ class Notifications extends Model
     protected $fillable = [
         'name',
         'count',
+        'code',
+        'type'
     ];
 }

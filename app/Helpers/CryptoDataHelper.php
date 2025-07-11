@@ -4,75 +4,93 @@ namespace App\Helpers;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Storage;
+use App\Models\MarketPrices;
+use App\Models\Notifications;
+use Illuminate\Support\Facades\Http;
+
 
 class CryptoDataHelper
 {
+    public static $TYPE = 'BI';
 
-    public static function sendCryptoChartToTelegram($coinName = 'BTCUSDT')
+    public static function getPrices($fillterCoins = [])
     {
-        $t = new CryptoDataHelper();
-        $coinName = strtolower($coinName);
-        $coinName = str_replace('usdt', 'xxx', $coinName);
+        $types = [CryptoDataHelper::$TYPE];
+
+        foreach ($types as $a => $type) {
+            $prices = MarketPrices::select('price')->where('type', $type)->orderBy('created_at', 'DESC')->limit(1440)->get();
+            $coins = [];
+            $data['sizeof calculate'] = sizeof($prices);
+
+            foreach ($prices as $index => $row) {
 
 
-        $coinLists = Storage::disk('public')->json('json/data.json');
+                $jsondata = $row['price'];
+                if (!is_null($jsondata) && $jsondata != '') {
+                    $jsondata = json_decode($jsondata, true);
 
-        $cryptoId = array_search($coinName, array_column($coinLists, 'symbol'));
-        if (!$cryptoId) {
-            $cryptoId = $coinLists[$cryptoId]['id'];
-            $data = $t->getCryptoData($cryptoId);
-
-            if (!empty($data)) {
-                $filename = $t->drawChart($data);
-                $t->sendPhotoToTelegram($filename);
-                //echo "Chart sent to Telegram successfully.";
+                    foreach ($jsondata as $index2 => $d) {
+                        if (sizeof($fillterCoins) > 0) {
+                            if (!in_array($d['symbol'], $fillterCoins)) {
+                                continue;
+                            }
+                        }
+                        $coins[$d['symbol']][$index] = (float) $d['markPrice'];
+                    }
+                }
             }
+
+            return ($coins);
         }
-
     }
 
-    private function getCryptoData($cryptoId)
+    public static function sendCryptoChartToTelegram($symbol = 'BTCUSDT')
     {
-        $client = new Client();
-        $response = $client->get("https://api.coingecko.com/api/v3/coins/$cryptoId/market_chart?vs_currency=usd&days=2");
-        return json_decode($response->getBody(), true);
+        $interval = '1h';
+
+        // ดึงข้อมูลกราฟจาก Binance
+        $response = Http::get("https://api.binance.com/api/v3/klines", [
+            'symbol' => $symbol,
+            'interval' => $interval,
+            'limit' => 50,
+        ]);
+
+        $klines = $response->json();
+
+        // วาดกราฟ (เช่นใช้ chart.js, QuickChart API หรือวาดด้วย PHP GD)
+        $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode([
+            'type' => 'candlestick',
+            'data' => [
+                'datasets' => [
+                    [
+                        'label' => $symbol,
+                        'data' => array_map(function ($kline) {
+                            return [
+                                'x' => $kline[0],
+                                'o' => (float)$kline[1],
+                                'h' => (float)$kline[2],
+                                'l' => (float)$kline[3],
+                                'c' => (float)$kline[4],
+                            ];
+                        }, $klines),
+                    ]
+                ]
+            ]
+        ]));
+
+        // ส่งภาพไป Telegram
+        $token = '5684645252:AAE-yYoJAo0GPwvjvmDA-Y2GF72gVYE6Vts';
+        $chatId = '@cryptopumpdumpnotis';
+        //$url = "https://api.telegram.org/bot$token/sendPhoto";
+
+        Http::post("https://api.telegram.org/bot" . $token . "/sendPhoto", [
+            'chat_id' => $chatId,
+            'photo' => $chartUrl,
+            'caption' => "กราฟ $symbol รายชั่วโมง (1H)"
+        ]);
     }
 
-    private function drawChart($data, $width = 800, $height = 500)
-    {
-        $image = imagecreatetruecolor($width, $height);
 
-        $white = imagecolorallocate($image, 255, 255, 255);
-        $black = imagecolorallocate($image, 0, 0, 0);
-        $red = imagecolorallocate($image, 255, 0, 0);
-
-        imagefill($image, 0, 0, $white);
-        imagerectangle($image, 0, 0, $width - 1, $height - 1, $black);
-
-        $prices = $data['prices'];
-        $num_points = count($prices);
-        $max_price = max(array_column($prices, 1));
-        $min_price = min(array_column($prices, 1));
-
-        $padding = 50;
-        $graph_width = $width - 2 * $padding;
-        $graph_height = $height - 2 * $padding;
-
-        for ($i = 1; $i < $num_points; $i++) {
-            $x1 = $padding + (($i - 1) / ($num_points - 1)) * $graph_width;
-            $y1 = $height - $padding - (($prices[$i - 1][1] - $min_price) / ($max_price - $min_price)) * $graph_height;
-            $x2 = $padding + ($i / ($num_points - 1)) * $graph_width;
-            $y2 = $height - $padding - (($prices[$i][1] - $min_price) / ($max_price - $min_price)) * $graph_height;
-
-            imageline($image, $x1, $y1, $x2, $y2, $red);
-        }
-
-        $filename = base_path().'/public_html/crypto_chart.jpg';
-        imagejpeg($image, $filename);
-        imagedestroy($image);
-
-        return $filename;
-    }
 
     private function sendPhotoToTelegram($filename)
     {
@@ -94,5 +112,4 @@ class CryptoDataHelper
             ],
         ]);
     }
-
 }

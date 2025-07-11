@@ -16,5 +16,6 @@ class CoinStats extends Model
         'max12',
         'max24',
         'max48',
+        'price'
     ];
 }

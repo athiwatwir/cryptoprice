@@ -1,121 +1,45 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Jobs;
+
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 
 use App\Helpers\CryptoDataHelper;
 use App\Helpers\IndicatorHelper;
-use App\Helpers\TrandHelper;
-use App\Jobs\CryptoProcessJob;
-use App\Models\CoinStats;
 use App\Models\MarketPrices;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
-class MarketPriceController extends Controller
-{
-    public function processJob()
-    {
 
-        CryptoProcessJob::dispatch();
+class CryptoProcessJob implements ShouldQueue
+{
+    use Queueable;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
     }
 
-    public function updatePrice()
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
     {
-
-        //$this->binance();
-
+        //Log::debug('hi');
         if (CryptoDataHelper::$TYPE == 'BI') {
             $this->binance();
+            //$this->binanceBidsArks('BTCUSDT');
         } else {
             $this->okx();
         }
 
-        /*
-
-        IndicatorHelper::calculator();
-*/
-        return response()->json([
-            'status' => true,
-            'message' => "updatePrice successfully!",
-        ], 200);
-    }
-
-    public function indicator()
-    {
-        //sleep(10);
         $data = IndicatorHelper::calculator();
-        return response()->json([
-            'status' => true,
-            'message' => "indicator successfully!",
-            'data' => $data
-        ], 200);
-    }
-
-    public function updateTrand()
-    {
-
-        $data = TrandHelper::calculator();
-
-        return response()->json([
-            'status' => true,
-            'message' => "successfully!",
-            'data' => $data
-        ], 200);
-    }
-
-    public function sendChart()
-    {
-        CryptoDataHelper::sendCryptoChartToTelegram('BTCUSDT');
-    }
-
-    public function max()
-    {
-        $_prices = MarketPrices::select('price')->where('type', CryptoDataHelper::$TYPE)->orderBy('created_at', 'DESC')->limit(2880)->get();
-        $_coins = [];
-        foreach ($_prices as $index => $row) {
-
-            $jsondata = $row['price'];
-            if (!is_null($jsondata) && $jsondata != '') {
-                $jsondata = json_decode($jsondata, true);
-
-                foreach ($jsondata as $index2 => $d) {
-                    $_coins[$d['symbol']][$index] = (float) $d['markPrice'];
-                }
-            }
-        }
-
-        foreach ($_coins as $index => $prices) {
-            unset($_coins[$index][0]);
-            unset($_coins[$index][1]);
-
-
-            $max4 = max(array_slice($prices, 0, 240));
-            $max6 = max(array_slice($prices, 0, 360));
-            $max12 = max(array_slice($prices, 0, 720));
-            $max24 = max(array_slice($prices, 0, 1440));
-            $max48 = max($prices);
-
-            CoinStats::updateOrCreate(
-                ['name' => $index],
-                [
-                    'name' => trim($index),
-                    'max4' => round($max4, 6),
-                    'max6' => round($max6, 6),
-                    'max12' => round($max12, 6),
-                    'max24' => round($max24, 6),
-                    'max48' => round($max48, 6),
-                ]
-            );
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => "successfully!",
-
-        ], 200);
     }
 
     private function binance()

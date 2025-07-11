@@ -39,12 +39,11 @@ class IndicatorNotification extends Notification
     {
         if ($this->data->isLong) {
             return TelegramMessage::create()
-                ->content("[".$this->data->count."]🟢 LONG #" . $this->data->coin.' up '.$this->data->amount.'%');
+                ->content("[" . $this->data->count . "]🟢 LONG #" . $this->data->coin . ' up ' . $this->data->amount . '%  BidArk: ' . $this->data->bid_ark);
         } else {
             return TelegramMessage::create()
-            ->content("[".$this->data->count."]🔴 SHORT #" . $this->data->coin.' down '.$this->data->amount.'%');
+                ->content("[" . $this->data->count . "]🔴 SHORT #" . $this->data->coin . ' down ' . $this->data->amount . '%');
         }
-
     }
 
     /**

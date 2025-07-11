@@ -16,11 +16,11 @@ class TrandHelper
 {
     public static function calculator()
     {
-        $types = ['BI'];
+        $types = [CryptoDataHelper::$TYPE];
         $data = [];
 
         foreach ($types as $a => $type) {
-            $prices = MarketPrices::select('price','created_at')->where('type', $type)->orderBy('created_at', 'DESC')->limit(15)->get();
+            $prices = MarketPrices::select('price', 'created_at')->where('type', $type)->orderBy('created_at', 'DESC')->limit(15)->get();
 
             //dd($prices);
             $coins = [];
@@ -43,53 +43,54 @@ class TrandHelper
             $loopCoin = 0;
             //Log::debug($coins);
             foreach ($coins as $coin => $prices) {
+
+                if (in_array($coin, ['DARUSDT', 'STRAXUSDT', 'STPTUSDT', 'DGBUSDT'])) {
+                    continue;
+                }
                 $upperCount = 0;
                 $failCount = 0;
 
                 $lastPrice = $prices[0];
                 foreach ($prices as $index => $price) {
 
-                    if($price <= $lastPrice){
+                    if ($price <= $lastPrice) {
                         $upperCount++;
                         $lastPrice = $price;
-                    }else{
+                    } else {
                         $failCount++;
                     }
-
                 }
 
-                if($failCount < 4){
-                    $coinStat = CoinStats::where('name',$coin)->first();
+                if ($failCount < 4) {
+                    $coinStat = CoinStats::where('name', $coin)->first();
                     $max24 = $coinStat->max24;
                     //$prices[0] > $maxPrice
-                    if($prices[0] > $max24){
+                    if ($prices[0] > $max24) {
                         $toDaydate = date('Y-m-d');
                         $_name = sprintf('%s_TRAND_%s', $toDaydate,  $coin);
 
                         $notificationLog = Notifications::where('name', $_name)->first();
-                        if(is_null($notificationLog)){
+                        if (is_null($notificationLog)) {
 
                             $data = [
                                 'telegram_user_id' => '@cryptotrands789',
                                 'coin' => $coin,
-                                'current'=>$prices[0],
-                                'max'=>$max24,
-                                'text'=>''
+                                'current' => $prices[0],
+                                'max' => $max24,
+                                'text' => ''
                             ];
                             Notification::route('telegram', '@cryptotrands789')->notify(new TrandNotification($data));
 
                             $notificationLog = Notifications::create(
                                 [
-                                    'name' => $_name,
+                                    'code' => $_name,
+                                    'name' => $coin,
+                                    'type' => 'TR',
                                     'count' => 1,
                                 ]
                             );
-
-
                         }
-
                     }
-
                 }
                 $loopCoin++;
             }
@@ -98,6 +99,5 @@ class TrandHelper
         $data['loopCoin'] = $loopCoin;
 
         return $data;
-
     }
 }
