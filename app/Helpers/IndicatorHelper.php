@@ -75,6 +75,7 @@ class IndicatorHelper
 
                     if ($failedCount <= 1) {
                         $notify = IndicatorHelper::notificationLog($coin, true);
+
                         if ($notify['isnotify']) {
                             $bidArk = 0;
                             $url = '';

@@ -20,6 +20,11 @@ class MarketPriceController extends Controller
     {
 
         CryptoProcessJob::dispatch();
+
+        return response()->json([
+            'status' => true,
+            'message' => "updatePrice successfully!",
+        ], 200);
     }
 
     public function updatePrice()

@@ -39,7 +39,7 @@ class CryptoProcessJob implements ShouldQueue
             $this->okx();
         }
 
-        $data = IndicatorHelper::calculator();
+        IndicatorHelper::calculator();
     }
 
     private function binance()
@@ -74,7 +74,7 @@ class CryptoProcessJob implements ShouldQueue
             $stupidCoins = IndicatorHelper::$stupidCoins;
 
             if (Str::endsWith($coinName, 'USDT') && (in_array($coinName, $stupidCoins) == false)) {
-                array_push($newDataArr, ['symbol' => $coinName, 'markPrice' => $price]);
+                $newDataArr[] = ['symbol' => $coinName, 'markPrice' => $price];
             }
         }
 

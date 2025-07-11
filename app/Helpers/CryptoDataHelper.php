@@ -46,16 +46,18 @@ class CryptoDataHelper
 
     public static function sendCryptoChartToTelegram($symbol = 'BTCUSDT')
     {
-        $interval = '1h';
+        $interval = '3m';
 
         // ดึงข้อมูลกราฟจาก Binance
         $response = Http::get("https://api.binance.com/api/v3/klines", [
             'symbol' => $symbol,
             'interval' => $interval,
-            'limit' => 50,
+            'limit' => 200,
         ]);
 
         $klines = $response->json();
+
+        //dd($klines);
 
         // วาดกราฟ (เช่นใช้ chart.js, QuickChart API หรือวาดด้วย PHP GD)
         $chartUrl = "https://quickchart.io/chart?version=3&c=" . urlencode(json_encode([
@@ -88,7 +90,7 @@ class CryptoDataHelper
         Http::post("https://api.telegram.org/bot" . $token . "/sendPhoto", [
             'chat_id' => $chatId,
             'photo' => $chartUrl,
-            'caption' => "กราฟ $symbol รายชั่วโมง (1H)"
+            'caption' => "กราฟ $symbol รายชั่วโมง (4H)"
         ]);
     }
 }
