@@ -46,13 +46,13 @@ class CryptoDataHelper
 
     public static function sendCryptoChartToTelegram($symbol = 'BTCUSDT')
     {
-        $interval = '3m';
+        $interval = '1h';
 
         // ดึงข้อมูลกราฟจาก Binance
         $response = Http::get("https://api.binance.com/api/v3/klines", [
             'symbol' => $symbol,
             'interval' => $interval,
-            'limit' => 200,
+            'limit' => 80,
         ]);
 
         $klines = $response->json();
@@ -90,7 +90,7 @@ class CryptoDataHelper
         Http::post("https://api.telegram.org/bot" . $token . "/sendPhoto", [
             'chat_id' => $chatId,
             'photo' => $chartUrl,
-            'caption' => "กราฟ $symbol รายชั่วโมง (4H)"
+            'caption' => "กราฟ $symbol รายชั่วโมง (1H)"
         ]);
     }
 }

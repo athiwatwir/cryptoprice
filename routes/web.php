@@ -32,6 +32,10 @@ Route::get('/indicator', function () {
 
 Route::controller(MarketPriceController::class)->group(function () {
     Route::get('marketprice/process', 'processJob')->name('marketprice.process');
+
+    Route::get('marketprice/test', 'test')->name('marketprice.test');
+
+    /*
     Route::get('marketprice/send-chart', 'sendChart')->name('marketprice.sendChart');
 
 
@@ -41,6 +45,7 @@ Route::controller(MarketPriceController::class)->group(function () {
     Route::get('/marketprice/indicator', 'indicator')->name('marketprice.indicator');
 
     Route::get('/marketprice/max', 'max')->name('marketprice.max');
+    */
 });
 
 
