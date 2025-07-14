@@ -16,7 +16,7 @@ class IndicatorApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => $result,
+            'message' => '',
         ], 200);
     }
 }
