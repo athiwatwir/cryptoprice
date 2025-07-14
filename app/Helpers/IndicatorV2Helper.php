@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Storage;
 use App\Models\MarketPrices;
 use App\Models\Notifications;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -38,9 +39,10 @@ class IndicatorV2Helper
         return $pctChange > 5 && $upCandles >= 3 && $endPrice >= $highPrice;
     }
 
-    public static function scanPumpCandidates(int $limit = 5, float $priceChangeThreshold = 2.0, float $bidAskThreshold = 0.6): array
+    public static function scanPumpCandidates(int $limit = 5, float $priceChangeThreshold = 1.7, float $bidAskThreshold = 0.6): array
     {
         $result = [];
+        $now = Carbon::now()->format('Y-m-d H:i');
 
         // ดึงราคาย้อนหลัง เช่น 5 แท่งล่าสุด
         $prices = CryptoV2Helper::getPrices($limit);
@@ -63,22 +65,24 @@ class IndicatorV2Helper
 
                 //if ($bidAskRatio >= $bidAskThreshold) {
 
-                $result[] = [
-                    'symbol' => $symbol,
-                    'change_percent' => round($percentChange, 2),
-                    'bid_ask_ratio' => round($bidAskRatio, 2),
-                    'price_now' => $latest,
-                    'price_prev' => $prev,
-                ];
-
-                TelegramV2Helper::sendCryptoChartToTelegram($symbol);
                 TelegramV2Helper::sendLong($symbol, round($percentChange, 2), 0, round($bidAskRatio, 2));
+                TelegramV2Helper::sendCryptoChartToTelegram($symbol);
                 //}
             }
+
+
+            $result[] = [
+                'symbol' => $symbol,
+                'change_percent' => round($percentChange, 2),
+                'price_now' => $latest,
+                'price_prev' => $prev,
+                'max_price' => $maxPrice,
+            ];
         }
 
         //dd($result);
 
+        Storage::disk('local')->put('scanPumpCandidates/' . $now . '.json', json_encode($result, JSON_PRETTY_PRINT));
         return $result;
     }
 }

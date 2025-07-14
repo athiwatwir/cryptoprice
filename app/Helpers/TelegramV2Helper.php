@@ -59,7 +59,7 @@ class TelegramV2Helper
 
     public static function sendCryptoChartToTelegram($symbol = 'BTCUSDT')
     {
-        $interval = '1h';
+        $interval = '4h';
 
         // ดึงข้อมูลกราฟจาก Binance
         $response = Http::get("https://api.binance.com/api/v3/klines", [
@@ -103,7 +103,7 @@ class TelegramV2Helper
         Http::post("https://api.telegram.org/bot" . $botToken . "/sendPhoto", [
             'chat_id' => $chatId,
             'photo' => $chartUrl,
-            'caption' => "กราฟ $symbol รายชั่วโมง (1H)"
+            'caption' => "กราฟ $symbol รายชั่วโมง (4H)"
         ]);
     }
 }

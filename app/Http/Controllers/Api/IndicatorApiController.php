@@ -11,6 +11,7 @@ class IndicatorApiController extends Controller
 {
     public function scanPump()
     {
+        sleep(5);
         $result = IndicatorV2Helper::scanPumpCandidates(60);
 
         return response()->json([
