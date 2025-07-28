@@ -82,7 +82,7 @@ class IndicatorV2Helper
 
         //dd($result);
 
-        Storage::disk('local')->put('scanPumpCandidates/' . $now . '.json', json_encode($result, JSON_PRETTY_PRINT));
+        //Storage::disk('local')->put('scanPumpCandidates/' . $now . '.json', json_encode($result, JSON_PRETTY_PRINT));
         return $result;
     }
 }

@@ -65,7 +65,7 @@ class TelegramV2Helper
         $response = Http::get("https://api.binance.com/api/v3/klines", [
             'symbol' => $symbol,
             'interval' => $interval,
-            'limit' => 80,
+            'limit' => 180,
         ]);
 
         $klines = $response->json();
